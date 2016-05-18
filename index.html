@@ -21,6 +21,10 @@
     <link rel="stylesheet" href="lib/css/zenburn.css">
     <!-- gtihub -->
     <style type="text/css">
+      .reveal tt { font-family: monospace;}
+      code { min-width: 25em; }
+      .reveal code.gh { background: white; }
+      .reveal code.code-wrap { overflow-wrap: break-word; }
       .pl-c {
           color: #969896
       }
@@ -124,14 +128,15 @@
 
   <div class="reveal">
     <div class="slides">
-      <section class="stack">
 
+      <section data-background="img/nixos-logo-only-hires.png">
         <section>
-          <h1>
+          <h1 style="text-transform: none;">
             <a href="http://nixos.org" target="_blank">NixOS</a>
           </h1>
           <h3>Your Next Favorite Server OS</h3>
           <p><small>Wout Mertens / <a href="http://twitter.com/wmertens">@wmertens</a></small></p>
+          <img width="100" src="img/nixos-logo-only-hires.png" style="border: none; box-shadow: none;" />
         </section>
 
         <section>
@@ -154,7 +159,7 @@
               <td><span class="fragment zoom-in">Functional language to define packages</span>
             <tr>
               <td><b>Nixpkgs</b>
-              <td><span class="fragment zoom-in">Github repo, defines thousands (TODO how many) of interdepending packages</span>
+              <td><span class="fragment zoom-in">Github repo, defines thousands of interdepending packages</span>
             <tr>
               <td><b>NixOS</b>
               <td><span class="fragment zoom-in">Uses Nixpkgs (only) to build Linux distribution</span>
@@ -163,7 +168,7 @@
               <td><span class="fragment zoom-in">Uses Nixpkgs to build Nixpkgs + NixOS, run regression tests</span>
             <tr>
               <td><b>NixOps</b>
-              <td><span class="fragment zoom-in">Defines many NixOS systems together and deploys</span>
+              <td><span class="fragment zoom-in">Defines many NixOS systems together and deploys to cloud</span>
           </table>
         </section>
         <section>
@@ -205,12 +210,11 @@
         <section>
           <h3>Binaries</h3>
           <p>There is almost nothing installed where you expect it:
-          <pre><code data-trim><span class=pl-s1>$ find /bin /sbin /usr \! -type d -ls</span>
+          <pre><code data-trim class=code-wrap><span class=pl-s1>$ find /bin /sbin /usr \! -type d -ls</span>
 lrwxrwxrwx 1 root root 63 Jan 23 12:51 /bin/sh -> /nix/store/r83lb76j1kyx5irkymcvci61fwyswbc0-bash-4.3-p30/bin/sh
 `/sbin': No such file or directory
-lrwxrwxrwx 1 root root 66 Jan 23 12:51 /usr/bin/env -> /nix/store/wc472nw0kyw0iwgl6352ii5czxd97js2-coreutils-8.23/bin/env
-$</code></pre>
-          <p>Everything is a file or directory in the read-only Nix Store
+lrwxrwxrwx 1 root root 66 Jan 23 12:51 /usr/bin/env -> /nix/store/wc472nw0kyw0iwgl6352ii5czxd97js2-coreutils-8.23/bin/env</code></pre>
+          <p>Everything is a file or directory in the <b>read-only</b> Nix Store
           <pre><code data-trim><span class=pl-s1>$ ls -F /nix/store/</span>
 00gzp6x5vmdcp5kc8nsw5mlyfr4qlq7l-node-fstream-0.1.31.drv
 01zb2w8idl839vmarbg02mng437k4za4-libffi-3.0.13.drv
@@ -222,111 +226,203 @@ $</code></pre>
 /dev/sda1 on /nix/store type ext4 (<span class=pl-s1>ro</span>,relatime,data=ordered)</code></pre>
         </section>
         <section>
-              <p>installing configuring systemd rebuild switch rollback</p>
-              <p>screenshots  /nix/store stats</p>
+          <p>Very few things in /etc are writeable
+<pre><code data-trim><span class=pl-s1>$ find /etc -type f -perm -200 -printf "%M %u %g %p\n"</span>
+-rw------- root root /etc/passwd-
+-rw-r--r-- root root /etc/NIXOS
+-rw-r--r-- root root /etc/passwd
+-rw-r--r-- root root /etc/dhcpcd.duid
+-rw-r--r-- root root /etc/ssh/ssh_host_ecdsa_key.pub
+-rw------- root root /etc/ssh/ssh_host_ecdsa_key
+-rw-r--r-- root root /etc/ssh/ssh_host_dsa_key.pub
+-rw------- root root /etc/ssh/ssh_host_dsa_key
+-rw-r--r-- root root /etc/subuid
+-rw-r--r-- root root /etc/adjtime
+-rw-r--r-- root root /etc/resolv.conf
+-rw------- root root /etc/.pwd.lock
+-rw------- root root /etc/shadow-
+-rw------- root root /etc/gshadow-
+-rw------- root root /etc/crontab
+-rw------- root root /etc/shadow
+-rw-r--r-- root root /etc/.clean
+-rw-r--r-- root root /etc/group
+-rw-r--r-- root root /etc/subgid
+-rw-r--r-- root root /etc/group-
+-rw-r--r-- root root /etc/nixos/configuration.nix
+</code></pre>
         </section>
         <section>
-              <p>demo nixos-rebuild and rollback</p>
+          <p>There's not even an /etc/ssh/sshd_config!
+          <pre><code data-trim class=code-wrap><span class=pl-s1>$ pgrep -lfa /sshd</span>
+1096 /nix/store/m5m4w52wnn733cd4islqgqr8hxa22i9q-openssh-6.7p1/sbin/sshd -f /nix/store/gql0wpr0m574r283vgad6m39gfxszvza-sshd_config
+<span class=pl-s1>$ ls -l /nix/store/gql0wpr0m574r283vgad6m39gfxszvza-sshd_config</span>
+-r--r--r-- 2 root nixbld 506 Jan  1  1970 /nix/store/gql0wpr0m574r283vgad6m39gfxszvza-sshd_config</code></pre>
+          <p>All system configuration is managed by NixOS
+          <pre><code>services.openssh = {
+  enabled = true;
+  allowSFTP = false;
+};</code></pre>
         </section>
-        <section>
-              <p>screenshots of some example configs</p>
+        <section data-transition=fade>
+          <h1>Installation</h1>
+            <ol>
+              <li>Take base NixOS image
+              <li>Change /etc/configuration.nix
+              <li>Run <pre><code># nixos-rebuild switch</code></pre>
+            </ol>
+        </section>
+        <section data-transition=fade>
+          <h1>Configuration</h1>
+            <ol>
+              <li>Change /etc/configuration.nix
+              <li>Run <pre><code># nixos-rebuild switch</code></pre>
+            </ol>
+        </section>
+        <section data-transition=fade>
+          <h1>Update</h1>
+            <ol>
+              <li>Run <pre><code># nix-channel --update</code></pre>
+              <li>Run <pre><code># nixos-rebuild switch</code></pre>
+            </ol>
+        </section>
+        <section data-transition=fade>
+          <h1>Upgrade</h1>
+            <ol>
+              <li>Run <pre><code># nix-channel --add <em>$NEW_CHANNEL_URL</em> nixos
+# nix-channel --update</code></pre>
+              <li>Run <pre><code># nixos-rebuild switch</code></pre>
+            </ol>
+        </section>
+        <section data-transition=fade>
+          <h1>Rollback</h1>
+            <ol>
+              <li>Run <pre><code># nixos-rebuild switch --rollback</code></pre>
+            </ol>
+        </section>
+        <section data-transition=zoom data-background-transition=zoom data-background="img/picard-points.jpg">
+          <!-- Ok this is lame, there should be a pulldown class or something -->
+          <p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;
+          <h1 style="color:#fff">Demo Time</h1>
+          <aside class="notes">
+            Show `systemctl`, then enable mongodb, show services and roll back
+          </aside>
         </section>
       </section>
       <section>
         <section>
-              <h1>stateless?</h1>
+          <h1>The Nix Store</h1>
+          <ul>
+            <li>Packages go under <tt>/nix/store/<b>&lt;inputs-hash></b>-name-version</tt></li>
+            <li><tt>inputs-hash</tt> is determined from <b>all</b> inputs
+            <li>Store paths can be files or directories
+            <li>Fixed inputs => fixed output
+              <ul><li class=fragment>=> Binary packages! (just tarball)</li></ul>
+          </ul>
+          <aside class=notes>
+            When building a package, all inputs are hashed and determine the path of the package
+          </aside>
         </section>
         <section>
-              <h2>Stateful</h2>
-              <img src="https://www.domenkozar.com/images/packaging_stateful.png">
-          </section>
-          <section>
-                <h2>Stateless</h2>
-                <img data-natural-width="624" data-natural-height="187" style="visibility: visible;" data-src="https://www.domenkozar.com/images/packaging_stateless.png">
-            </section>
-          </section>
-          <section class="stack">
+          <h1>Examples</h1>
+          <ul>
+            <li>Python v2.7.8 => <tt>/nix/store/<b>jwnhidzlb8g0cscyi459v3k1hfd3qbar</b>-python-2.7.8/</tt></li>
+            <li>Python v2.7.9 => <tt>/nix/store/<b>rhghn8brqrz4j5ndkhwnm4afqjvk7zi8</b>-python-2.7.9/</tt></li>
+            <li class=fragment>Python v2.7.8 with other inputs => <tt>/nix/store/<b>kzlmbhfmdazbf1y8jxwb1ik7zh9bqn2k</b>-python-2.7.8/</tt></li>
+          </ul>
+          <aside class=notes>
+            Any input change changes the hash. Disadvantage: harder to find out what the inputs were
+          </aside>
+        </section>
+        <section>
+          <h1>Dependencies</h1>
+<pre><code class=code-wrap><span class=pl-s1>$ ldd /nix/store/jwnhidzlb8g0cscyi459v3k1hfd3qbar-python-2.7.8/bin/python2.7</span>
+  linux-vdso.so.1 (0x00007fffda7b0000)
+  libgcc_s.so.1 => /nix/store/n2zcibvfxg6k2wpiipd8bzmc46q0vjy6-gcc-4.8.3/lib64/libgcc_s.so.1 (0x00007fd6cca76000)
+  libpython2.7.so.1.0 => /nix/store/jwnhidzlb8g0cscyi459v3k1hfd3qbar-python-2.7.8/lib/libpython2.7.so.1.0 (0x00007fd6cc66e000)
+  libpthread.so.0 => /nix/store/i11d0d4015p0vbdnjq7lb509v9pwp049-glibc-2.19/lib64/libpthread.so.0 (0x00007fd6cc450000)</code></pre>
+          <aside class=notes>
+            Inputs are identified by full path whenever possible. Sometimes need wrappers for PATH etc.
+          </aside>
+        </section>
+        <section>
+          <h1>Composing</h1>
+            <pre><code class=code-wrap><span class=pl-s1>$ ls -l /run/current-system</span>
+lrwxrwxrwx 1 root root 71 Feb  1 15:12 /run/current-system -> /nix/store/naqqwjsqd2ss9n4008sj7224r56h70xg-nixos-15.05pre54730.cbe467e
+<span class=pl-s1>$ ls -l /run/current-system/</span>
+total 52
+-r-xr-xr-x   2 root nixbld 14936 Jan  1  1970 activate
+dr-xr-xr-x   2 root nixbld  4096 Jan  1  1970 bin
+-r--r--r-- 929 root root       0 Jan  1  1970 configuration-name
+lrwxrwxrwx   2 root nixbld    51 Jan  1  1970 etc -> /nix/store/iwlph9az3ddfany0zi2jqjzdc56hs8ci-etc/etc
+dr-xr-xr-x   2 root nixbld  4096 Jan  1  1970 fine-tune
+lrwxrwxrwx   4 root nixbld    52 Jan  1  1970 firmware -> /nix/store/arsa48md6vpzssx7q77vw4wwmizg6rz2-firmware
+-r-xr-xr-x   2 root nixbld  5187 Jan  1  1970 init
+-r--r--r--   5 root root       9 Jan  1  1970 init-interface-version
+lrwxrwxrwx   4 root nixbld    57 Jan  1  1970 initrd -> /nix/store/a7qffhivs15bn83js63xidlq72pzl8d1-initrd/initrd
+lrwxrwxrwx   5 root nixbld    65 Jan  1  1970 kernel -> /nix/store/59fiawb5712jzg689m0y127dc5791dhc-linux-3.14.26/bzImage
+lrwxrwxrwx   4 root nixbld    58 Jan  1  1970 kernel-modules -> /nix/store/p38n28cqpr2pfzgj6fbl659dn0iwvx26-kernel-modules
+-r--r--r--   5 root root      10 Jan  1  1970 kernel-params
+-r--r--r--   4 root nixbld    21 Jan  1  1970 nixos-version
+lrwxrwxrwx   2 root nixbld    55 Jan  1  1970 sw -> /nix/store/zgb45ax92dz4yxgv06zcz1f4yc1m3s61-system-path
+-r--r--r--   5 root root      12 Jan  1  1970 system
+lrwxrwxrwx   4 root nixbld    55 Jan  1  1970 systemd -> /nix/store/jm14g8y06l2m11q069zi0ckiv7hqk2n3-systemd-217
+</code></pre>
+          <aside class=notes>
+            The system is a package that simply links everything together
+          </aside>
+        </section>
+        <section>
+          <h1>The Magic</h1>
+            <p>What happens at switch time:
+            <ol>
+              <li>Parse configuration
+              <li>Build/download all packages for configuration
+              <li>Link them together with symlinks
+              <li>Replace <tt>/run/current-system</tt> with symlink to new system
+              <li>Update boot loader to boot into this system
+              <li>Tell systemd to stop/start/reload services
+            </ol>
+            <aside class=notes>
+              Note that invalid configuration syntax is caught before building starts.
+              There is also nixos-rebuild boot, test, build-vm
+            </aside>
+        </section>
+      </section>
+        <section>
+          <h1>Consequences</h1>
+            <ul>
+              <li>All packages, all versions, simultaneously
+              <li>Switch is atomic
+              <li>Instant rollback
+              <li>Stateless:
+                <ul><li>Go between any version (*)
+                </li>
+                <li>But user state is not managed</ul>
+            </ul>
+            <p>&nbsp;
+            <small>(*) As long as systemd can stand it</small>
+            <aside class=notes>
+              There is no dependence on previous state, except for user state like databases.
+            </aside>
+        </section>
+      </section>
+      <section>
+        <section data-transition=slide data-background-transition=fade data-background="img/Picard_und_Earl_Grey.jpg">
+          <h1 style="color:#fff">Show Me More</h1>
+          <aside class="notes">
+            nix-shell -p python27; nix-shell -p python32
+          </aside>
+        </section>
             <section>
-              <div class="sl-block" data-block-type="text" style="width: 800px; left: 80px; top: 270px; height: auto;">
-                <div class="sl-block-content" style="z-index: 10;">
-                  <h1>packager view</h1>
-                </div>
-              </div>
-              <div class="sl-block" data-block-type="text" style="height: auto; width: 600px; left: 86px; top: 496px;">
-                <div class="sl-block-content" style="z-index: 12;">
-                  <p>nix, package definition, service</p>
-                </div>
-              </div>
-            </section>
-            <section>
-              <div class="sl-block" data-block-type="text" style="width: 800px; left: 80px; top: 190px; height: auto;">
-                <div class="sl-block-content">
-                  <h2>the Nix language</h2>
-                  <p>Nixpkgs
-                  <p>NixOS
-                  <p>NixOps
-                </div>
-              </div>
-              <div class="sl-block" data-block-type="text" style="width: 800px; left: 80px; top: 264px; height: auto;">
-                <div class="sl-block-content">
-                  <ul>
-                    <li>Pure functional
-  
-                      <ul>
-                        <li>Input fully determines output</li>
-                      </ul>
-                    </li>
-                    <li>Lazy evaluation
-  
-                      <ul>
-                        <li>Very efficient</li>
-                      </ul>
-                    </li>
-                    <li>Building is a side-effect
-  
-                      <ul>
-                        <li>Identify build product by inputs</li>
-                        <li>Build if not in store</li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </section>
-          </section>
-          <section>
-            <div class="sl-block" data-block-type="text" style="width: 800px; left: 80px; top: 270px; height: auto;">
-              <div class="sl-block-content" style="z-index: 10;">
-                <h1>user&nbsp;view</h1>
-              </div>
-            </div>
-            <div class="sl-block" data-block-type="text" style="height: auto; min-width: 30px; min-height: 30px; width: 600px; left: 173px; top: 401px;">
-              <div class="sl-block-content" style="z-index: 12;">
-                <p>install packages, environments</p>
-              </div>
-            </div>
-          </section>
-          <section class="stack">
-            <section>
-              <div class="sl-block" data-block-type="text" style="width: 800px; left: 80px; top: 268px; height: auto;">
-                <div class="sl-block-content">
                   <h1>
                     <a href="http://nixos.org/nixpkgs" target="_blank">Nixpkgs</a>
                   </h1>
-                </div>
-              </div>
             </section>
             <section>
-              <div class="sl-block" data-block-type="text" style="width: 800px; left: 80px; top: 190px; height: auto;">
-                <div class="sl-block-content">
-                  <h2>Roll your own distro!</h2>
-                </div>
-              </div>
-              <div class="sl-block" data-block-type="text" style="width: 800px; left: 80px; top: 264px; height: auto;">
-                <div class="sl-block-content">
+                  <h1>Roll your own distro!</h1>
                   <ul>
                     <li>nixpkgs is a single expression
-  
+
                       <ul>
                         <li>comprising many files</li>
                         <li>defining all packages together</li>
@@ -334,7 +430,7 @@ $</code></pre>
                       </ul>
                     </li>
                     <li>Need a special patch to Python?
-  
+
                       <ul>
                         <li>Add it in your config!</li>
                         <li>Override the whole system</li>
@@ -342,48 +438,88 @@ $</code></pre>
                       </ul>
                     </li>
                   </ul>
-                </div>
-              </div>
+            </section>
+            <section>
+                  <h1>
+                    <a href="http://nixos.org/nixos" target="_blank">NixOS</a>
+                  </h1>
+                  <ul>
+                    <li>NixOS is part of Nixpkgs
+                      <ul>
+                        <li>Adds "modules" which configure packages
+                        <li>Adds glue scripts for booting and switching
+                      </ul>
+                    </li>
+                    <li>Need a special patch to the OS?
+
+                      <ul>
+                        <li>Add it in your config!</li>
+                        <li>Override the whole system</li>
+                        <li>Or provide it for a single service</li>
+                      </ul>
+                    </li>
+                  </ul>
+          <pre><code>services.nginx.package = pkgs.nginx.override { rtmp = true; };
+</code></pre>
+
+              <aside class="notes">
+                The configuration gets mixed with the nixpkgs channel and defines the entire system.
+              </aside>
             </section>
           </section>
           <section>
-            <div class="sl-block" data-block-type="text" style="width: 800px; left: 80px; top: 270px; height: auto;">
-              <div class="sl-block-content">
-                <h1>
-                  <a href="http://nixos.org" target="_blank">NixOS</a>
-                </h1>
-              </div>
-            </div>
-          </section>
-          <section>
-            <div class="sl-block" data-block-type="text" style="width: 800px; left: 80px; top: 270px; height: auto;">
-              <div class="sl-block-content">
                 <h1>
                   <a href="http://nixos.org/nixops" target="_blank">NixOps</a>
                 </h1>
-              </div>
-            </div>
+                  <ul>
+                    <li>NixOS is part of Nixpkgs
+                      <ul>
+                        <li>Adds "modules" which configure packages
+                        <li>Adds glue scripts for booting and switching
+                      </ul>
+                    </li>
+                    <li>Need a special patch to the OS?
+
+                      <ul>
+                        <li>Add it in your config!</li>
+                        <li>Override the whole system</li>
+                        <li>Or provide it for a single service</li>
+                      </ul>
+                    </li>
+                  </ul>
+              <aside class="notes">
+                show mesos expressions on github, run example on GCE
+              </aside>
           </section>
-          <section>
-            <div class="sl-block" data-block-type="text" style="width: 800px; left: 80px; top: 270px; height: auto;">
-              <div class="sl-block-content">
-                <blockquote>
-                  <p>
+          <section class=stretch>
+          <table><tr>
+                <td><img src="img/tweet-3.png"/>
+                <td><img src="img/tweet-4.png"/>
+                <tr><td colspan=2>
+                <blockquote >
                     <span>mnngfltg2: </span>
                     <span>I can't believe I just copied some random person's configuration.nix from github and now I have his exact setup</span>
-                  </p>
                 </blockquote>
-              </div>
-            </div>
+                <tr>
+                <td><img src="img/tweet-5.png"/>
+                <td><img src="img/tweet-6.png"/>
+                </table>
           </section>
           <section>
-            <div class="sl-block" data-block-type="text" style="width: 800px; left: 80px; top: 190px; height: auto;">
-              <div class="sl-block-content">
+            <h1>Recap</h1>
+            <ul>
+              <li><b>Nixpkgs</b> provides stateless packages anywhere
+              <li><b>NixOS</b>
+                <ul>
+                  <li>stateless => safe upgrades
+                  <li>git commit + config == server
+                </ul>
+              <li>NixOps combines systems "atomically"
+              <li class="fragment">NixOS == amazing server OS
+            </ul>
+          </section>
+          <section>
                 <h2>Things left out of the talk</h2>
-              </div>
-            </div>
-            <div class="sl-block" data-block-type="text" style="width: 800px; left: 80px; top: 264px; height: auto;">
-              <div class="sl-block-content">
                 <ul>
                   <li>nixos-containers</li>
                   <li>Hydra</li>
@@ -395,334 +531,24 @@ $</code></pre>
                   <li>patchelf</li>
                   <li>hash-based dependency detection</li>
                 </ul>
-              </div>
-            </div>
           </section>
+        <section data-transition=zoom data-background-transition=zoom data-background="img/picard-engage.jpg">
+          <h1 style="color:#fff">Engage</h1>
+          <!-- Ok this is lame, there should be a pulldown class or something -->
+          <p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;
+          <h1 style="color:#fff">NixOS Rollout</h1>
+        </section>
           <section>
                 <h2>shutdown -h</h2>
                 <ul>
-                  <li>Thanks to Domen&nbsp;Kožar, Zef Hemel, Tim Cuthbertson&nbsp;and others for concept inspiration</li>
-                  <li>IRC: #nixos</li>
-                  <li>Hire me: Wout.Mertens@gmail.com</li>
+                  <li>Thanks to Domen Kožar, Zef Hemel, Tim Cuthbertson, Sander van der Burg and others for concept inspiration</li>
+                  <li>Ask questions on IRC: #nixos</li>
+                  <li>Wout.Mertens@gmail.com</li>
                 </ul>
                 <p>
             <div style="margin-top: 4em;"><small>Lovingly handcrafted with <a href="https://github.com/hakimel/reveal.js/">reveal.js</a></small></div>
           </section>
 
-
-
-
-
-        <!-- Example of nested vertical slides -->
-        <section>
-          <section>
-            <h2>Vertical Slides</h2>
-            <p>Slides can be nested inside of each other.</p>
-            <p>Use the <em>Space</em> key to navigate through all slides.</p>
-            <br>
-            <a href="#" class="navigate-down">
-              <img width="178" height="238" data-src="https://s3.amazonaws.com/hakim-static/reveal-js/arrow.png" alt="Down arrow">
-            </a>
-          </section>
-          <section>
-            <h2>Basement Level 1</h2>
-            <p>Nested slides are useful for adding additional detail underneath a high level horizontal slide.</p>
-          </section>
-          <section>
-            <h2>Basement Level 2</h2>
-            <p>That's it, time to go back up.</p>
-            <br>
-            <a href="#/2">
-              <img width="178" height="238" data-src="https://s3.amazonaws.com/hakim-static/reveal-js/arrow.png" alt="Up arrow" style="-webkit-transform: rotate(180deg);">
-            </a>
-          </section>
-        </section>
-
-        <section>
-          <h2>Slides</h2>
-          <p>
-            Not a coder? Not a problem. There's a fully-featured visual editor for authoring these, try it out at <a href="http://slides.com" target="_blank">http://slides.com</a>.
-          </p>
-        </section>
-
-        <section>
-          <h2>Point of View</h2>
-          <p>
-            Press <kbd>ESC</kbd> to enter the slide overview.
-          </p>
-          <p>
-            Hold down alt and click on any element to zoom in on it using <a href="http://lab.hakim.se/zoom-js">zoom.js</a>. Alt + click anywhere to zoom back out.
-          </p>
-        </section>
-
-        <section>
-          <h2>Touch Optimized</h2>
-          <p>
-            Presentations look great on touch devices, like mobile phones and tablets. Simply swipe through your slides.
-          </p>
-        </section>
-
-        <section data-markdown>
-          <script type="text/template">
-            ## Markdown support
-
-            Write content using inline or external Markdown.
-            Instructions and more info available in the [readme](https://github.com/hakimel/reveal.js#markdown).
-
-            ```
-            <section data-markdown>
-              ## Markdown support
-
-              Write content using inline or external Markdown.
-              Instructions and more info available in the [readme](https://github.com/hakimel/reveal.js#markdown).
-            </section>
-            ```
-          </script>
-        </section>
-
-        <section>
-          <section id="fragments">
-            <h2>Fragments</h2>
-            <p>Hit the next arrow...</p>
-            <p class="fragment">... to step through ...</p>
-            <p><span class="fragment">... a</span> <span class="fragment">fragmented</span> <span class="fragment">slide.</span></p>
-
-            <aside class="notes">
-              This slide has fragments which are also stepped through in the notes window.
-            </aside>
-          </section>
-          <section>
-            <h2>Fragment Styles</h2>
-            <p>There's different types of fragments, like:</p>
-            <p class="fragment grow">grow</p>
-            <p class="fragment shrink">shrink</p>
-            <p class="fragment roll-in">roll-in</p>
-            <p class="fragment fade-out">fade-out</p>
-            <p class="fragment current-visible">current-visible</p>
-            <p class="fragment highlight-red">highlight-red</p>
-            <p class="fragment highlight-blue">highlight-blue</p>
-          </section>
-        </section>
-
-        <section id="transitions">
-          <h2>Transition Styles</h2>
-          <p>
-            You can select from different transitions, like: <br>
-            <a href="?transition=none#/transitions">None</a> -
-            <a href="?transition=fade#/transitions">Fade</a> -
-            <a href="?transition=slide#/transitions">Slide</a> -
-            <a href="?transition=convex#/transitions">Convex</a> -
-            <a href="?transition=concave#/transitions">Concave</a> -
-            <a href="?transition=zoom#/transitions">Zoom</a>
-          </p>
-        </section>
-
-        <section id="themes">
-          <h2>Themes</h2>
-          <p>
-            reveal.js comes with a few themes built in: <br>
-            <!-- Hacks to swap themes after the page has loaded. Not flexible and only intended for the reveal.js demo deck. -->
-            <a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/black.css'); return false;">Black (default)</a> -
-            <a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/white.css'); return false;">White</a> -
-            <a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/league.css'); return false;">League</a> -
-            <a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/sky.css'); return false;">Sky</a> -
-            <a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/beige.css'); return false;">Beige</a> -
-            <a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/simple.css'); return false;">Simple</a> <br>
-            <a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/serif.css'); return false;">Serif</a> -
-            <a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/night.css'); return false;">Night</a> -
-            <a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/moon.css'); return false;">Moon</a> -
-            <a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/solarized.css'); return false;">Solarized</a>
-          </p>
-        </section>
-
-        <section>
-          <section data-background="#dddddd">
-            <h2>Slide Backgrounds</h2>
-            <p>
-              Set <code>data-background="#dddddd"</code> on a slide to change the background color. All CSS color formats are supported.
-            </p>
-            <a href="#" class="navigate-down">
-              <img width="178" height="238" data-src="https://s3.amazonaws.com/hakim-static/reveal-js/arrow.png" alt="Down arrow">
-            </a>
-          </section>
-          <section data-background="https://s3.amazonaws.com/hakim-static/reveal-js/image-placeholder.png">
-            <h2>Image Backgrounds</h2>
-            <pre><code>&lt;section data-background="image.png"&gt;</code></pre>
-          </section>
-          <section data-background="https://s3.amazonaws.com/hakim-static/reveal-js/image-placeholder.png" data-background-repeat="repeat" data-background-size="100px">
-            <h2>Tiled Backgrounds</h2>
-            <pre><code style="word-wrap: break-word;">&lt;section data-background="image.png" data-background-repeat="repeat" data-background-size="100px"&gt;</code></pre>
-          </section>
-          <section data-background-video="https://s3.amazonaws.com/static.slid.es/site/homepage/v1/homepage-video-editor.mp4,https://s3.amazonaws.com/static.slid.es/site/homepage/v1/homepage-video-editor.webm" data-background-color="#000000">
-            <div style="background-color: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px;">
-              <h2>Video Backgrounds</h2>
-              <pre><code style="word-wrap: break-word;">&lt;section data-background-video="video.mp4,video.webm"&gt;</code></pre>
-            </div>
-          </section>
-        </section>
-
-        <section data-transition="slide" data-background="#4d7e65" data-background-transition="zoom">
-          <h2>Background Transitions</h2>
-          <p>
-            Different background transitions are available via the backgroundTransition option. This one's called "zoom".
-          </p>
-          <pre><code>Reveal.configure({ backgroundTransition: 'zoom' })</code></pre>
-        </section>
-
-        <section data-transition="slide" data-background="#b5533c" data-background-transition="zoom">
-          <h2>Background Transitions</h2>
-          <p>
-            You can override background transitions per-slide.
-          </p>
-          <pre><code style="word-wrap: break-word;">&lt;section data-background-transition="zoom"&gt;</code></pre>
-        </section>
-
-        <section>
-          <h2>Pretty Code</h2>
-          <pre><code data-trim contenteditable>
-function linkify( selector ) {
-  if( supports3DTransforms ) {
-
-  var nodes = document.querySelectorAll( selector );
-
-  for( var i = 0, len = nodes.length; i &lt; len; i++ ) {
-    var node = nodes[i];
-
-    if( !node.className ) {
-    node.className += ' roll';
-    }
-  }
-  }
-}
-          </code></pre>
-          <p>Code syntax highlighting courtesy of <a href="http://softwaremaniacs.org/soft/highlight/en/description/">highlight.js</a>.</p>
-        </section>
-
-        <section>
-          <h2>Marvelous List</h2>
-          <ul>
-            <li>No order here</li>
-            <li>Or here</li>
-            <li>Or here</li>
-            <li>Or here</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2>Fantastic Ordered List</h2>
-          <ol>
-            <li>One is smaller than...</li>
-            <li>Two is smaller than...</li>
-            <li>Three!</li>
-          </ol>
-        </section>
-
-        <section>
-          <h2>Tabular Tables</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Value</th>
-                <th>Quantity</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Apples</td>
-                <td>$1</td>
-                <td>7</td>
-              <tr>
-              <tr>
-                <td>Lemonade</td>
-                <td>$2</td>
-                <td>18</td>
-              <tr>
-              <tr>
-                <td>Bread</td>
-                <td>$3</td>
-                <td>2</td>
-              <tr>
-            </tbody>
-          </table>
-        </section>
-
-        <section>
-          <h2>Clever Quotes</h2>
-          <p>
-            These guys come in two forms, inline: <q cite="http://searchservervirtualization.techtarget.com/definition/Our-Favorite-Technology-Quotations">
-            &ldquo;The nice thing about standards is that there are so many to choose from&rdquo;</q> and block:
-          </p>
-          <blockquote cite="http://searchservervirtualization.techtarget.com/definition/Our-Favorite-Technology-Quotations">
-            &ldquo;For years there has been a theory that millions of monkeys typing at random on millions of typewriters would
-            reproduce the entire works of Shakespeare. The Internet has proven this theory to be untrue.&rdquo;
-          </blockquote>
-        </section>
-
-        <section>
-          <h2>Intergalactic Interconnections</h2>
-          <p>
-            You can link between slides internally,
-            <a href="#/2/3">like this</a>.
-          </p>
-        </section>
-
-        <section>
-          <h2>Speaker View</h2>
-          <p>There's a <a href="https://github.com/hakimel/reveal.js#speaker-notes">speaker view</a>. It includes a timer, preview of the upcoming slide as well as your speaker notes.</p>
-          <p>Press the <em>S</em> key to try it out.</p>
-
-          <aside class="notes">
-            Oh hey, these are some notes. They'll be hidden in your presentation, but you can see them if you open the speaker notes window (hit 's' on your keyboard).
-          </aside>
-        </section>
-
-        <section>
-          <h2>Global State</h2>
-          <p>
-            Set <code>data-state="something"</code> on a slide and <code>"something"</code>
-            will be added as a class to the document element when the slide is open. This lets you
-            apply broader style changes, like switching the page background.
-          </p>
-        </section>
-
-        <section data-state="customevent">
-          <h2>State Events</h2>
-          <p>
-            Additionally custom events can be triggered on a per slide basis by binding to the <code>data-state</code> name.
-          </p>
-          <pre><code class="javascript" data-trim contenteditable style="font-size: 18px;">
-Reveal.addEventListener( 'customevent', function() {
-  console.log( '"customevent" has fired' );
-} );
-          </code></pre>
-        </section>
-
-        <section>
-          <h2>Take a Moment</h2>
-          <p>
-            Press B or . on your keyboard to pause the presentation. This is helpful when you're on stage and want to take distracting slides off the screen.
-          </p>
-        </section>
-
-        <section>
-          <h2>Much more</h2>
-          <ul>
-            <li>Right-to-left support</li>
-            <li><a href="https://github.com/hakimel/reveal.js#api">Extensive JavaScript API</a></li>
-            <li><a href="https://github.com/hakimel/reveal.js#auto-sliding">Auto-progression</a></li>
-            <li><a href="https://github.com/hakimel/reveal.js#parallax-background">Parallax backgrounds</a></li>
-            <li><a href="https://github.com/hakimel/reveal.js#keyboard-bindings">Custom keyboard bindings</a></li>
-          </ul>
-        </section>
-
-        <section style="text-align: left;">
-          <h1>THE END</h1>
-          <p>
-            - <a href="http://slides.com">Try the online editor</a> <br>
-            - <a href="https://github.com/hakimel/reveal.js">Source code &amp; documentation</a>
-          </p>
-        </section>
 
       </div>
 
