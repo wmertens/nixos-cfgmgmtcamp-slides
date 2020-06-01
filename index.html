@@ -210,10 +210,16 @@
         <section>
           <h3>Binaries</h3>
           <p>There is almost nothing installed where you expect it:
-          <pre><code data-trim class=code-wrap><span class=pl-s1>$ find /bin /sbin /usr \! -type d -ls</span>
-lrwxrwxrwx 1 root root 63 Jan 23 12:51 /bin/sh -> /nix/store/r83lb76j1kyx5irkymcvci61fwyswbc0-bash-4.3-p30/bin/sh
-`/sbin': No such file or directory
-lrwxrwxrwx 1 root root 66 Jan 23 12:51 /usr/bin/env -> /nix/store/wc472nw0kyw0iwgl6352ii5czxd97js2-coreutils-8.23/bin/env</code></pre>
+          <pre><code data-trim class=code-wrap><span class=pl-s1>$ ls -lR /sbin /bin /usr/bin</span>
+ls: cannot access '/sbin': No such file or directory
+/bin:
+total 4
+lrwxrwxrwx 1 root root 75 May 27 16:58 sh -> /nix/store/xmsf9n4bbxjrrpvr2x56jjzyc3xm9j9x-bash-interactive-4.4-p23/bin/sh
+
+/usr/bin:
+total 4
+lrwxrwxrwx 1 root root 66 May 27 16:58 env -> /nix/store/3qgzqqamhnwm178amyb46pdrzx2nakl5-coreutils-8.31/bin/env</code></pre>
+          <p><em>Only `sh` and `env` in /bin and /usr/bin!</em>
           <p>Everything is a file or directory in the <b>read-only</b> Nix Store
           <pre><code data-trim><span class=pl-s1>$ ls -F /nix/store/</span>
 00gzp6x5vmdcp5kc8nsw5mlyfr4qlq7l-node-fstream-0.1.31.drv
